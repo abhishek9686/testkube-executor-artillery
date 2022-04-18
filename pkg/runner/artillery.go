@@ -91,11 +91,7 @@ func (r *ArtilleryRunner) Run(execution testkube.Execution) (result testkube.Exe
 	if err != nil {
 		return result.Err(fmt.Errorf("failed to get test execution results")), err
 	}
-	MapTestSummaryToResults(artilleryResult)
 
 	// return ExecutionResult
-	return testkube.ExecutionResult{
-		Status: testkube.StatusPtr(testkube.PASSED_ExecutionStatus),
-		Output: string(out),
-	}, nil
+	return MapTestSummaryToResults(artilleryResult), nil
 }
