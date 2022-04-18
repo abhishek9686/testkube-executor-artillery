@@ -6,18 +6,19 @@ import (
 	"github.com/kubeshop/testkube/pkg/executor/output"
 )
 
-func NewRunner() *ExampleRunner {
-	return &ExampleRunner{
+// NewRunner ...
+func NewRunner() *ArtilleryRunner {
+	return &ArtilleryRunner{
 		Fetcher: content.NewFetcher(),
 	}
 }
 
-// ExampleRunner for template - change me to some valid runner
-type ExampleRunner struct {
+// ArtilleryRunner ...
+type ArtilleryRunner struct {
 	Fetcher content.ContentFetcher
 }
 
-func (r *ExampleRunner) Run(execution testkube.Execution) (result testkube.ExecutionResult, err error) {
+func (r *ArtilleryRunner) Run(execution testkube.Execution) (result testkube.ExecutionResult, err error) {
 	path, err := r.Fetcher.Fetch(execution.Content)
 	if err != nil {
 		return result, err
