@@ -7,8 +7,9 @@ ENV GOOS=linux
 
 RUN cd cmd/agent;go build -o /runner -mod mod -a .
 
-FROM artilleryio/artillery
-RUN apk --no-cache add ca-certificates
+FROM node:17
+RUN apt-get update && apt-get install -y git
+RUN npm install -g artillery@latest
 WORKDIR /root/
 COPY --from=0 /runner /bin/runner
 EXPOSE 8082
