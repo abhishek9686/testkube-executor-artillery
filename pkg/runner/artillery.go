@@ -89,14 +89,13 @@ func (r *ArtilleryRunner) Run(execution testkube.Execution) (result testkube.Exe
 	args = append(args, "-o", testReportFile)
 
 	args = append(args, execution.Args...)
-
 	// run executor here
 	out, rerr := executor.Run(testDir, "artillery", args...)
 
 	var artilleryResult ArtilleryExecutionResult
 	artilleryResult, err = r.GetArtilleryExecutionResult(testReportFile, out)
 	if err != nil {
-		return result.Err(fmt.Errorf("failed to get test execution results")), err
+		return result.WithErrors(rerr, fmt.Errorf("failed to get test execution results")), err
 	}
 
 	result = MapTestSummaryToResults(artilleryResult)
@@ -112,5 +111,5 @@ func (r *ArtilleryRunner) Run(execution testkube.Execution) (result testkube.Exe
 	}
 
 	// return ExecutionResult
-	return result.WithErrors(err, rerr), nil
+	return result.WithErrors(err), nil
 }

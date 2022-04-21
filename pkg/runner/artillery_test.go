@@ -12,15 +12,23 @@ func TestRun(t *testing.T) {
 	t.Run("runner should run test based on execution data", func(t *testing.T) {
 		// given
 		runner := NewArtilleryRunner()
-		execution := testkube.NewQueuedExecution()
-		execution.Content = testkube.NewStringTestContent("hello I'm test content")
-
-		// when
-		result, err := runner.Run(*execution)
+		repoURI := "https://github.com/abhishek9686/testkube-executor-artillery.git"
+		result, err := runner.Run(testkube.Execution{
+			Content: &testkube.TestContent{
+				Type_: string(testkube.TestContentTypeGitFile),
+				Repository: &testkube.Repository{
+					Type_:  "git",
+					Uri:    repoURI,
+					Branch: "main",
+					Path:   "examples/test.yaml",
+				},
+			},
+		})
 
 		// then
 		assert.NoError(t, err)
 		assert.Equal(t, result.Status, testkube.PASSED_ExecutionStatus)
+
 	})
 
 }
