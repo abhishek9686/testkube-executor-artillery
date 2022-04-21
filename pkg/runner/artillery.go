@@ -9,14 +9,23 @@ import (
 	"github.com/kubeshop/testkube/pkg/executor"
 	"github.com/kubeshop/testkube/pkg/executor/content"
 	"github.com/kubeshop/testkube/pkg/executor/output"
+	"github.com/kubeshop/testkube/pkg/executor/scrapper"
 )
 
+// Params ...
 type Params struct {
-	GitUsername string // RUNNER_GITUSERNAME
-	GitToken    string // RUNNER_GITTOKEN
+	Endpoint        string // RUNNER_ENDPOINT
+	AccessKeyID     string // RUNNER_ACCESSKEYID
+	SecretAccessKey string // RUNNER_SECRETACCESSKEY
+	Location        string // RUNNER_LOCATION
+	Token           string // RUNNER_TOKEN
+	Ssl             bool   // RUNNER_SSL
+	ScrapperEnabled bool   // RUNNER_SCRAPPERENABLED
+	GitUsername     string // RUNNER_GITUSERNAME
+	GitToken        string // RUNNER_GITTOKEN
 }
 
-// NewRunner ...
+// NewArtilleryRunner ...
 func NewArtilleryRunner() *ArtilleryRunner {
 	var params Params
 	err := envconfig.Process("runner", &params)
@@ -26,15 +35,25 @@ func NewArtilleryRunner() *ArtilleryRunner {
 	return &ArtilleryRunner{
 		Fetcher: content.NewFetcher(""),
 		Params:  params,
+		Scrapper: scrapper.NewScrapper(
+			params.Endpoint,
+			params.AccessKeyID,
+			params.SecretAccessKey,
+			params.Location,
+			params.Token,
+			params.Ssl,
+		),
 	}
 }
 
 // ArtilleryRunner ...
 type ArtilleryRunner struct {
-	Params  Params
-	Fetcher content.ContentFetcher
+	Params   Params
+	Fetcher  content.ContentFetcher
+	Scrapper *scrapper.Scrapper
 }
 
+// Run ...
 func (r *ArtilleryRunner) Run(execution testkube.Execution) (result testkube.ExecutionResult, err error) {
 	// make some validation
 	err = r.Validate(execution)
@@ -54,44 +73,45 @@ func (r *ArtilleryRunner) Run(execution testkube.Execution) (result testkube.Exe
 
 	output.PrintEvent("created content path", path)
 
-	// if execution.Content.IsFile() {
-	// 	output.PrintEvent("using file", execution)
-	// 	// TODO implement file based test content for string, git-file, file-uri
-	// 	//      or remove if not used
-	// }
-
-	// if execution.Content.IsDir() {
-	// 	output.PrintEvent("using dir", execution)
-	// 	// TODO implement file based test content for git-dir
-	// 	//      or remove if not used
-	// }
-
 	params := make([]string, 0, len(execution.Params))
 	for key, value := range execution.Params {
 		params = append(params, fmt.Sprintf("%s=%s", key, value))
 	}
-	testDir, _ := filepath.Split(execution.Content.Repository.Path)
+	testDir, _ := filepath.Split(path)
 	args := []string{"run", path}
 	if len(params) != 0 {
 		args = append(args, params...)
 	}
+	// artillery test output file
 	testReportFile := filepath.Join(testDir, "test-report.json")
-	args = append(args, "-o", testReportFile)
+
 	// append args from execution
+	args = append(args, "-o", testReportFile)
+
 	args = append(args, execution.Args...)
 
 	// run executor here
-	out, err := executor.Run(path, "artillery", args...)
-	// error result should be returned if something is not ok
-	if err != nil {
-		return result.Err(fmt.Errorf("some test execution related error occured")), err
-	}
-	artilleryResult, err := r.GetArtilleryExecutionResult(testReportFile, out)
+	var out []byte
+	out, err = executor.Run(testDir, "artillery", args...)
 
+	var artilleryResult ArtilleryExecutionResult
+	artilleryResult, err = r.GetArtilleryExecutionResult(testReportFile, out)
 	if err != nil {
 		return result.Err(fmt.Errorf("failed to get test execution results")), err
 	}
 
+	result = MapTestSummaryToResults(artilleryResult)
+
+	if r.Params.ScrapperEnabled && r.Scrapper != nil {
+		artifacts := []string{
+			testReportFile,
+		}
+		err = r.Scrapper.Scrape(execution.Id, artifacts)
+		if err != nil {
+			return result.WithErrors(fmt.Errorf("scrape artifacts error: %w", err)), nil
+		}
+	}
+
 	// return ExecutionResult
-	return MapTestSummaryToResults(artilleryResult), nil
+	return result.WithErrors(err), nil
 }
