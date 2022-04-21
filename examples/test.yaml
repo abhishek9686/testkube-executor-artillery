@@ -1,16 +1,13 @@
 config:
   target: "https://api.zippopotam.us"
   phases:
-    - duration: 60
+    - duration: 10
       arrivalRate: 5
       name: Warm up
-    - duration: 120
+    - duration: 20
       arrivalRate: 5
       rampTo: 50
       name: Ramp up load
-    - duration: 600
-      arrivalRate: 50
-      name: Sustained load
   payload:
     path: "postcodes.csv"
     fields:
