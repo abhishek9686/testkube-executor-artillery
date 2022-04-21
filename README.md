@@ -15,11 +15,6 @@ Artillery is a modern, powerful & easy-to-use performance testing toolkit. Use i
 
 Artillery prioritizes developer productivity and happiness, and follows the "batteries-included" philosophy.
 
-# Issues and enchancements 
-
-Please follow the main [TestKube repository](https://github.com/kubeshop/testkube) for reporting any [issues](https://github.com/kubeshop/testkube/issues) or [discussions](https://github.com/kubeshop/testkube/discussions)
-
-
 
 # Usage
 
@@ -55,6 +50,9 @@ kubectl testkube run test artillery-example-test -f
 ```
 
 
+# Issues and enchancements 
+
+Please follow the main [TestKube repository](https://github.com/kubeshop/testkube) for reporting any [issues](https://github.com/kubeshop/testkube/issues) or [discussions](https://github.com/kubeshop/testkube/discussions)
 
 
 # Testkube 
