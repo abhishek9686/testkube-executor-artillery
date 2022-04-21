@@ -82,7 +82,7 @@ func (r *ArtilleryRunner) Run(execution testkube.Execution) (result testkube.Exe
 	if len(params) != 0 {
 		args = append(args, params...)
 	}
-	// artillery test output file
+	// artillery test result output file
 	testReportFile := filepath.Join(testDir, "test-report.json")
 
 	// append args from execution
@@ -91,8 +91,7 @@ func (r *ArtilleryRunner) Run(execution testkube.Execution) (result testkube.Exe
 	args = append(args, execution.Args...)
 
 	// run executor here
-	var out []byte
-	out, err = executor.Run(testDir, "artillery", args...)
+	out, rerr := executor.Run(testDir, "artillery", args...)
 
 	var artilleryResult ArtilleryExecutionResult
 	artilleryResult, err = r.GetArtilleryExecutionResult(testReportFile, out)
@@ -113,5 +112,5 @@ func (r *ArtilleryRunner) Run(execution testkube.Execution) (result testkube.Exe
 	}
 
 	// return ExecutionResult
-	return result.WithErrors(err), nil
+	return result.WithErrors(err, rerr), nil
 }
